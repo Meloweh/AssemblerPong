@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="24">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>15</ID>
+      <Description>"BallPhysik"</Description>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+//reserviere Speicher fuer Variablen
+alloc(ballX, 32)
+alloc(ballY, 32)
+alloc(spielerY, 32)
+alloc(botY, 32)
+
+alloc(plattformGroesse, 32)
+alloc(plattformMitte, 32)
+
+alloc(linkePlattformX, 32)
+alloc(rechtePlattformX, 32)
+
+alloc(linkeWand, 32)
+alloc(rechteWand, 32)
+
+alloc(obereWandY, 32)
+alloc(untereWandY, 32)
+
+alloc(ballPhysik, 2048)
+
+alloc(geschwindigkeitX, 32)
+alloc(geschwindigkeitY, 32)
+
+alloc(negierWert, 32)
+
+alloc(spielfeldMitteX, 32)
+alloc(spielfeldMitteY, 32)
+
+alloc(spielerHatBeruehrt, 8)
+alloc(botHatBeruehrt, 8)
+
+alloc(botScore, 32)
+alloc(spielerScore, 32)
+
+alloc(plattformZentrumY, 32)
+alloc(ballZentrumY, 32)
+
+alloc(divisionsFaktor, 32)
+
+registersymbol(plattformZentrumY)
+registersymbol(ballZentrumY)
+registersymbol(ballPhysik)
+
+//initialisiere Variablen
+ballX:
+dd (float)375
+
+ballY:
+dd (float)275
+
+spielerY:
+dd (float)0
+
+botY:
+dd (float)0
+
+plattformGroesse:
+dd (float)150
+
+plattformMitte:
+dd (float)75
+
+linkePlattformX:
+dd (float)50
+
+rechtePlattformX:
+dd (float)725
+
+linkeWand:
+dd (float)0
+
+rechteWand:
+dd (float)790
+
+obereWandY:
+dd (float)0
+
+untereWandY:
+dd (float)575
+
+geschwindigkeitX:
+dd (float)-7
+
+geschwindigkeitY:
+dd (float)-5
+
+negierWert:
+dd (float)-1
+
+spielfeldMitteX:
+dd (float)375
+
+spielfeldMitteY:
+dd (float)275
+
+spielerHatberuehrt:
+db 0
+
+botHatBeruehrt:
+db 0
+
+botScore:
+dd (int)0
+
+spielerScore:
+dd (int)0
+
+ballMitte:
+dd (float)12.5
+
+plattformZentrumY:
+dd (float)0
+
+ballZentrumY:
+dd (float)0
+
+test3:
+dd (float)0
+
+divisionsFaktor:
+dd (float)9
+
+// Methode der Ballfunktion
+ballPhysik:
+
+//addiere Geschwindigkeit mit position
+fld dword ptr [ballX]
+fadd dword ptr [geschwindigkeitX]
+fstp dword ptr [ballX]
+
+fld dword ptr [ballY]
+fadd dword ptr [geschwindigkeitY]
+fstp dword ptr [ballY]
+
+//pruefe ob ein Tor geschossen wurde
+
+//pruefe linke Wand
+add [botScore], 01 //fuege vorlaufig einen Punkt hinzu
+fld [ballX]
+fld [linkeWand]
+fcomip st(0),st(1)
+fstp st(0)
+ja TorGeschossen // pruefe ob die X Position der linken Wand nicht groesser ist als von ballX
+sub [botScore], 01 //ziehe den vorlaufigen Punkte ab falls kein Tor
+
+//pruefe rechte Wand
+add [spielerScore], 01
+fld [ballX]
+fld [rechteWand]
+fcomip st(0),st(1)
+fstp st(0)
+jna TorGeschossen // pruefe ob die X Position von ballX nicht groesser ist als von der rechten Wand
+sub [spielerScore], 01
+jmp keinTorGeschossen
+
+TorGeschossen:
+
+//setze Ball zum Mittelpunkt
+fld [spielfeldMitteX]
+fstp [ballX]
+fld [spielfeldMitteY]
+fstp [ballY]
+
+//negiere Ballgeschwindigkeit
+fld [geschwindigkeitX]
+fld [negierWert]
+fmul st(0),st(1)
+fstp st(1)
+fstp [geschwindigkeitX]
+keinTorGeschossen:
+
+//pralle an der Decke ab
+fld dword ptr [obereWandY]
+fld dword ptr [ballY]
+fcomip st(0),st(1)
+fstp st(0)
+ja istUnterDerDecke
+fld dword ptr [geschwindigkeitY]
+fld dword ptr [negierWert]
+fmul st(0),st(1)
+fstp st(1)
+fstp dword ptr [geschwindigkeitY] // stosse in geschwindigkeitY
+istUnterDerDecke:
+//
+
+//pralle am Boden ab
+fld dword ptr [ballY]
+fld dword ptr [untereWandY]
+fcomip st(0),st(1)
+fstp st(0)
+ja istUeberDemBoden
+fld dword ptr [geschwindigkeitY]
+fld dword ptr [negierWert]
+fmul st(0),st(1)
+fstp st(1)
+fstp dword ptr [geschwindigkeitY] // stosse in geschwindigkeitY
+istUeberDemBoden:
+//
+
+//pralle am Spieler ab
+fld [ballX]
+fld [linkePlattformX]
+fcomip st(0),st(1)
+fstp st(0)
+jnae nichtAmSpieler // pruefe ob die X Position der linken Wand nicht groesser ist als von ballX
+
+//pruefe ob Hoehe auf gleicher Ebene
+
+//pruefe darueber
+fld [ballY]
+fadd [ballMitte]
+fld [spielerY]
+fcomip st(0),st(1)
+fstp st(0)
+ja nichtAmSpieler
+
+//pruefe darunter
+fld [spielerY]
+fadd [plattformGroesse]
+fld [ballY]
+fcomip st(0),st(1)
+fstp st(0)
+ja nichtAmSpieler //wenn der ball tiefer als bis zur Maximallaenge des Spielers ist dann springe
+
+//pruefe Beruehrung
+cmp [spielerHatBeruehrt], 01
+je SpielerHatEbenNochBeruehrt
+mov [spielerHatBeruehrt], 01
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+//berechne neue Fluggeschwindigkeit in Abhaengigkeit von der Aufschlagsposition an der Spielerplattform
+
+//berechne Plattformzentrum von Y
+fld [spielerY]
+fadd [plattformMitte]
+fstp [plattformZentrumY]
+
+//berechne Ballzentrum von Y
+fld [ballY]
+fadd [ballMitte]
+fstp [ballZentrumY]
+
+//berechne absolutes Ballzentrum in Abhaengigkeit vom Plattformzentrum
+fld [ballZentrumY]
+fsub [plattformZentrumY]
+fstp [ballZentrumY]
+
+//dividiere das Ergebnis vom Abstand
+fld [divisionsFaktor]
+fld [ballZentrumY]
+fdiv st(0),st(1)
+fstp st(1)
+fstp [geschwindigkeitY]
+
+//negiere Ballgeschwindigkeit
+fld [geschwindigkeitX]
+fld [negierWert]
+fmul st(0),st(1)
+fstp st(1)
+fstp [geschwindigkeitX]
+jmp SpielerHatEbenNochBeruehrt
+
+nichtAmSpieler:
+mov [spielerHatBeruehrt], 00
+SpielerHatEbenNochBeruehrt:
+
+//pralle am Bot ab
+fld [ballX]
+fld [rechtePlattformX]
+fcomip st(0),st(1)
+fstp st(0)
+jae nichtAmBot // pruefe ob die X Position der linken Wand nicht groesser ist als von ballX
+
+// pruefe ob Hoehe auf gleicher Ebene
+//pruefe ob darueber
+fld [ballY]
+fadd [ballMitte]
+fadd [ballMitte]
+fld [botY]
+fcomip st(0),st(1)
+fstp st(0)
+ja nichtAmBot
+
+//pruefe ob darunter
+fld [botY]
+fadd [plattformGroesse]
+fld [ballY]
+fcomip st(0),st(1)
+fstp st(0)
+ja nichtAmBot //wenn der ball tiefer als bis zur Maximallaenge des Spielers ist dann springe
+
+//pruefe Beruehrung
+cmp [botHatBeruehrt], 01
+je BotHatEbenNochBeruehrt
+mov [botHatBeruehrt], 01
+
+//berechne Plattformzentrum von Y
+fld [botY]
+fadd [plattformMitte]
+fstp [plattformZentrumY]
+
+//berechne Ballzentrum von Y
+fld [ballY]
+fadd [ballMitte]
+fstp [ballZentrumY]
+
+//berechne absolutes Ballzentrum in Abhaengigkeit vom Plattformzentrum
+fld [ballZentrumY]
+fsub [plattformZentrumY]
+fstp [ballZentrumY]
+
+//dividiere das Ergebnis vom Abstand
+fld [divisionsFaktor]
+fld [ballZentrumY]
+fdiv st(0),st(1)
+fstp st(1)
+fstp [geschwindigkeitY]
+
+//negiere Ballgeschwindigkeit
+fld [geschwindigkeitX]
+fld [negierWert]
+fmul st(0),st(1)
+fstp st(1)
+fstp [geschwindigkeitX]
+
+nichtAmBot:
+mov [botHatBeruehrt], 00
+BotHatEbenNochBeruehrt:
+//
+
+ret
+
+//////////////////////////////
+alloc(newmemBallXY, 1024)
+aobscan(aobBallXY, D9 01 D9 41 04 8D 4A 14 8B 01 89 45 C4 8B 71 04 8B 79 08 8B 41 0C 89 45 C0 8D 4D E4)
+label(returnBallXY)
+
+newmemBallXY:
+// neuer code
+call ballPhysik
+fld [ballX]
+fstp [ecx]
+fld [ballY]
+fstp dword ptr [ecx+04]
+//
+
+//original code
+fld dword ptr [ecx]
+fld dword ptr [ecx+04]
+//
+jmp returnBallXY
+
+aobBallXY:
+jmp newmemBallXY
+
+returnBallXY:
+registersymbol(aobBallXY)
+
+//////////////////////////////
+alloc(newmemPlayerY, 1024)
+aobscan(aobPlayerY, D9 5F 04 D9 46 10 DB 46 24 D9 5D D4 D9 45 D4 DE C1 DB 05)
+label(returnPlayerY)
+
+newmemPlayerY:
+// neuer code
+fld dword ptr [edi+04]
+fstp [spielerY]
+//
+
+//original code
+fstp dword ptr [edi+04]
+fld dword ptr [esi+10]
+//
+jmp returnPlayerY
+
+aobPlayerY:
+jmp newmemPlayerY
+nop
+
+returnPlayerY:
+registersymbol(aobPlayerY)
+//////////////////////////////
+alloc(newmemBotY, 1024)
+aobscan(aobBotY, D9 41 10 DF F1 DD D8 7A 11 76 0F 8D 41 0C D9 05)
+label(returnBotY)
+
+alloc(var, 32)
+
+var:
+dd (float)4.0
+
+newmemBotY:
+// neuer code
+fld dword ptr [ecx+10]
+fstp [botY]
+//
+
+//original code
+fld dword ptr [ecx+10]
+fcomip st(0),st(1)
+//
+jmp returnBotY
+
+aobBotY:
+jmp newmemBotY
+
+returnBotY:
+registersymbol(aobBotY)
+//////////////////////////////
+alloc(newmemBotPoints, 1024)
+aobscan(aobBotPoints, 8B 43 1C 89 42 04 E8 ?? ?? ?? ?? 8B D0 8D 7D C8 0F 57 C0 66 0F D6 07)
+label(returnBotPoints)
+
+newmemBotPoints:
+//original code
+//mov eax,[ebx+1C]
+//
+
+// neuer code
+mov eax, [botScore]
+mov [ebx+1C], eax
+cmp eax, 0A
+jl botNochNichtGewonnen
+mov dword ptr [botScore], 00
+fld [spielfeldMitteX]
+fstp [ballX]
+fld [spielfeldMitteY]
+fstp [ballY]
+botNochNichtGewonnen:
+//
+
+//original code
+mov [edx+04],eax
+//
+jmp returnBotPoints
+
+aobBotPoints:
+jmp newmemBotPoints
+nop
+
+returnBotPoints:
+registersymbol(aobBotPoints)
+//////////////////////////////
+alloc(newmemSpielerpunkte, 1024)
+aobscan(aobSpielerpunkte, 8B 43 18 89 42 04 E8 ?? ?? ?? ?? 8B D0 C7 45 B8 00 00 48 42 D9 EE)
+label(returnSpielerpunkte)
+
+newmemSpielerpunkte:
+//original code
+//mov eax,[ebx+18]
+//
+
+// setze spielerScore in Speicher
+mov eax, [spielerScore]
+mov [ebx+18], eax
+cmp eax, 0A
+jl spielerNochNichtGewonnen
+mov dword ptr [spielerScore], 00
+fld [spielfeldMitteX]
+fstp [ballX]
+fld [spielfeldMitteY]
+fstp [ballY]
+spielerNochNichtGewonnen:
+//
+
+//original code
+mov [edx+04],eax
+//
+jmp returnSpielerpunkte
+
+aobSpielerpunkte:
+jmp newmemSpielerpunkte
+nop
+
+returnSpielerpunkte:
+registersymbol(aobSpielerpunkte)
+//////////////////////////////
+
+[DISABLE]
+aobBallXY:
+db D9 01 D9 41 04
+dealloc(newmemBallXY)
+unregistersymbol(aobBallXY)
+
+aobPlayerY:
+db D9 5F 04 D9 46 10
+dealloc(newmemPlayerY)
+unregistersymbol(aobPlayerY)
+
+aobBotY:
+db D9 41 10 DF F1
+dealloc(newmemBotY)
+unregistersymbol(aobBotY)
+dealloc(var)
+
+aobBotPoints:
+db 8B 43 1C 89 42 04
+dealloc(newmemBotPoints)
+unregistersymbol(aobBotPoints)
+
+aobSpielerpunkte:
+db 8B 43 18 89 42 04
+dealloc(newmemSpielerpunkte)
+unregistersymbol(aobSpielerpunkte)
+
+dealloc(ballX)
+dealloc(ballY)
+dealloc(spielerY)
+dealloc(botY)
+dealloc(plattformGroesse)
+dealloc(plattformMitte)
+dealloc(linkePlattformX)
+dealloc(rechtePlattformX)
+dealloc(linkeWand)
+dealloc(rechteWand)
+dealloc(obereWandY)
+dealloc(untereWandY)
+dealloc(ballPhysik)
+dealloc(geschwindigkeitX)
+dealloc(geschwindigkeitY)
+dealloc(negierWert)
+dealloc(spielfeldMitteX)
+dealloc(spielfeldMitteY)
+dealloc(spielerHatBeruehrt)
+dealloc(botHatBeruehrt)
+unregistersymbol(ballPhysik)
+dealloc(botScore)
+dealloc(spielerScore)
+dealloc(plattformZentrumY)
+dealloc(ballZentrumY)
+unregistersymbol(plattformZentrumY)
+unregistersymbol(ballZentrumY)
+dealloc(divisionsFaktor)
+</AssemblerScript>
+    </CheatEntry>
+  </CheatEntries>
+  <CheatCodes>
+    <CodeEntry>
+      <Description>Change of mov eax,[ebx+1C]</Description>
+      <Address>0AA24736</Address>
+      <ModuleName/>
+      <ModuleNameOffset>0</ModuleNameOffset>
+      <Before>
+        <Byte>0D</Byte>
+        <Byte>44</Byte>
+        <Byte>24</Byte>
+        <Byte>44</Byte>
+        <Byte>04</Byte>
+      </Before>
+      <Actual>
+        <Byte>8B</Byte>
+        <Byte>43</Byte>
+        <Byte>1C</Byte>
+      </Actual>
+      <After>
+        <Byte>89</Byte>
+        <Byte>42</Byte>
+        <Byte>04</Byte>
+        <Byte>E8</Byte>
+        <Byte>DF</Byte>
+      </After>
+    </CodeEntry>
+  </CheatCodes>
+  <UserdefinedSymbols>
+    <SymbolEntry>
+      <Name>aobBallXY</Name>
+      <Address>0C3EDD79</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>aobPlayerY</Name>
+      <Address>0C3EE098</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>aobBotY</Name>
+      <Address>0C3EE1AE</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>aobBotPoints</Name>
+      <Address>0C3E4736</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>aobSpielerpunkte</Name>
+      <Address>0C3E4571</Address>
+    </SymbolEntry>
+  </UserdefinedSymbols>
+</CheatTable>

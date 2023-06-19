@@ -12,7 +12,7 @@ functionality was added to the game with assembly.
 
 ## Video
 
-[![IMAGE ALT TEXT](http://img.youtube.com/vi/I3MMMUBKEHQ/0.jpg)](http://www.youtube.com/watch?v=I3MMMUBKEHQ "Assembler fixed Pong Game")
+https://github.com/Meloweh/AssemblerPong/assets/49780209/402ba3dd-af9f-4fb1-a062-bdb83505332b
 
 ## Languages
 - C#
